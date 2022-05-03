@@ -6,6 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+filebuffer = "0.4.0"
+profiling = "1.0"
+polars = {version = "0.20.0", features = ["lazy"]}
 
 [dev-dependencies]
 criterion = "0.3"
@@ -13,3 +16,6 @@ criterion = "0.3"
 [[bench]]
 name = "csv_rw"
 harness = false
+
+[profile-release]
+debug = true
