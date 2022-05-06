@@ -4,12 +4,12 @@ use std::any::Any;
 use crate::stringpool;
 
 
+//Column has optional name, a data-type flag and dynamic trait type VectorData
 pub struct Column {
     pub name: Option<String>,
     dtype: Dtype,
     pub data: Box<dyn VectorData>,
 }
-
 impl Column {
     pub fn new(
         name: Option<String>,
@@ -26,7 +26,6 @@ impl Column {
         Column{name,dtype,data}
     }
 }
-
 impl Clone for Column {
     fn clone(&self) -> Self {
         Column{
@@ -38,36 +37,23 @@ impl Clone for Column {
     }
 }
 
-// impl PartialEq for Column {
-
-//     fn eq(&self, other: &Rhs) -> bool {
-//         true
-//     }
-
-//     fn ne(&self, other: &Rhs) -> bool {
-//         false
-//     }
-
-// }
-
-
-
-
+//VectorData is the trait that data of any column has, be it ints or floats or something else.
 pub trait VectorData {
     fn push_from_str(&mut self, x: &str);
     fn to_string(&self) -> String;
     fn as_any(&self) -> &dyn Any;
-    fn reserve(&mut self, addtional: usize);
-    fn boxed_clone(&self) -> Box<dyn VectorData>;
+    fn reserve(&mut self, additional: usize);
     fn dtype(&self) -> Dtype;
+    fn boxed_clone(&self) -> Box<dyn VectorData>;
 }
-
 impl fmt::Display for dyn VectorData {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
 
+
+//Dtype is the column flag of data type.
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub enum Dtype {
     ColInt,
@@ -77,7 +63,6 @@ pub enum Dtype {
     ColString,
     ColStringPool
 }
-
 impl Dtype {
     pub fn from_str(s: &str) -> Dtype {
         match s {
@@ -93,6 +78,9 @@ impl Dtype {
         }
     }
 }
+
+
+//all structs that implement VectorData
 
 //vanilla i32 f32 vectors
 #[derive(Clone, Debug, PartialEq, PartialOrd, Default)]
@@ -130,14 +118,14 @@ impl VectorData for ColInt {
     fn as_any(&self) -> &dyn Any {
         self
     }
-    fn reserve(&mut self, addtional: usize)  {
-        self.data.reserve(addtional);
+    fn reserve(&mut self, additional: usize)  {
+        self.data.reserve(additional);
     }
+
     fn boxed_clone(&self) -> Box<dyn VectorData> {
-        let y = self.clone();
-        let x: Box<dyn VectorData> = Box::new(y);
-        x
+        Box::new(self.clone())
     }
+
     fn dtype(&self) -> Dtype {
         Dtype::ColInt
     }
@@ -154,13 +142,11 @@ impl VectorData for ColDouble {
     fn as_any(&self) -> &dyn Any {
         self
     }
-    fn reserve(&mut self, addtional: usize)  {
-        self.data.reserve(addtional);
+    fn reserve(&mut self, additional: usize)  {
+        self.data.reserve(additional);
     }
     fn boxed_clone(&self) -> Box<dyn VectorData> {
-        let y = self.clone();
-        let x: Box<dyn VectorData> = Box::new(y);
-        x
+        Box::new(self.clone())
     }
     fn dtype(&self) -> Dtype {
         Dtype::ColDouble
@@ -186,13 +172,11 @@ impl VectorData for ColIntNullable {
     fn as_any(&self) -> &dyn Any {
         self
     }
-    fn reserve(&mut self, addtional: usize)  {
-        self.data.reserve(addtional);
+    fn reserve(&mut self, additional: usize)  {
+        self.data.reserve(additional);
     }
     fn boxed_clone(&self) -> Box<dyn VectorData> {
-        let y = self.clone();
-        let x: Box<dyn VectorData> = Box::new(y);
-        x
+        Box::new(self.clone())
     }
     fn dtype(&self) -> Dtype {
         Dtype::ColIntNullable
@@ -217,13 +201,11 @@ impl VectorData for ColDoubleNullable {
     fn as_any(&self) -> &dyn Any {
         self
     }
-    fn reserve(&mut self, addtional: usize)  {
-        self.data.reserve(addtional);
+    fn reserve(&mut self, additional: usize)  {
+        self.data.reserve(additional);
     }
     fn boxed_clone(&self) -> Box<dyn VectorData> {
-        let y = self.clone();
-        let x: Box<dyn VectorData> = Box::new(y);
-        x
+        Box::new(self.clone())
     }
     fn dtype(&self) -> Dtype {
         Dtype::ColDouble
@@ -241,14 +223,13 @@ impl VectorData for ColString {
     fn as_any(&self) -> &dyn Any {
         self
     }
-    fn reserve(&mut self, addtional: usize)  {
-        self.data.reserve(addtional);
+    fn reserve(&mut self, additional: usize)  {
+        self.data.reserve(additional);
     }
     fn boxed_clone(&self) -> Box<dyn VectorData> {
-        let y = self.clone();
-        let x: Box<dyn VectorData> = Box::new(y);
-        x
+        Box::new(self.clone())
     }
+
     fn dtype(&self) -> Dtype {
         Dtype::ColString
     }
@@ -264,13 +245,11 @@ impl VectorData for ColStringPool {
     fn as_any(&self) -> &dyn Any {
         self
     }
-    fn reserve(&mut self, addtional: usize)  {
-        self.data.pool.reserve(addtional);
+    fn reserve(&mut self, additional: usize)  {
+        self.data.reserve(additional);
     }
     fn boxed_clone(&self) -> Box<dyn VectorData> {
-        let y = self.clone();
-        let x: Box<dyn VectorData> = Box::new(y);
-        x
+        Box::new(self.clone())
     }
     fn dtype(&self) -> Dtype {
         Dtype::ColStringPool
