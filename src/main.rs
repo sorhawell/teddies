@@ -1,12 +1,14 @@
 mod dataframe;
 pub mod stringpool;
 
-fn main() {
 
+
+fn main() {
+   use dataframe::column;
    let mystring = String::from("my.csv");
    let myschema = "a:int,b:doubleNullable,c:int,someothername:string";
-   let df = dataframe::csv_read_file(&mystring, myschema);
-   let df3 = dataframe::csv_read_file_fast(&mystring, myschema);
+   let df = dataframe::csv_read_file(&mystring, myschema).unwrap();
+   let df3 = dataframe::csv_read_file_fast(&mystring, myschema).unwrap();
 
 
    println!("Hi I'm \n{}", df);
@@ -15,7 +17,7 @@ fn main() {
 
    let mycsvstr = "\"sr\"1,2.2,3,four\n10,20.20,30,fou\"\"rt\"y";
    let myschema = "a:string,b:doubleNullable,c:int,someothername:string";
-   let mut df2 = dataframe::csv_read_str(mycsvstr, myschema);
+   let mut df2 = dataframe::csv_read_str(mycsvstr, myschema).unwrap();
    println!("Hi I'm also \n{}", df2);
 
    let a_csv_line = String::from("42,123.456,112,yep");

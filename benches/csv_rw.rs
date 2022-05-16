@@ -4,7 +4,7 @@ use teddies::dataframe;
 fn csv_str() {
     let mycsvstr = "11,890318,t,0.816093979869038";
     let myschema = "a:int,b:int,c:string,d:double";
-    let mut df = dataframe::csv_read_str(mycsvstr, myschema);
+    let mut df = dataframe::csv_read_str(mycsvstr, myschema).unwrap();
     let a_csv_line = String::from("11,890318,t,0.816093979869038");
     for _ in 0..100000 {
         df.append_line(&a_csv_line);

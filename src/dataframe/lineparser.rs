@@ -83,14 +83,15 @@ pub fn take_cell_str(text: &str) -> ((&str, &str), bool) {
     let mut new_line: bool = false;
     while let Some(c) = oc {
         match c {
+
+            ',' => {
+                if !quote_on {break;}
+            },
             '\n' => {
                 if !quote_on {
                     new_line = true;
                     break;
                 }
-            },
-            ',' => {
-                if !quote_on {break;}
             },
             '"' => quote_on = !quote_on,
             _ => ()
@@ -179,42 +180,3 @@ mod tests {
 
 
 }
-
-
-    // pub fn parse_csv_str(text: &str) {
-
-//     //prepass to infer line count    
-//     let n_lines = text.lines().count();
-//     //df.reserve(n_lines + 500);
-
-//     println!("{n_lines:?}");
-
-//     let quoted_iter = text.split('"');
-//     let mut quote_state: bool = true;
-
-
-//     let mut i_char: usize = 0;
-//     let mut last_sep: usize = 0;
-//     let mut i_line: usize = 0;
-//     let mut quote_buf: &str = "";
-//     for i in quoted_iter.into_iter() {
-//         quote_state = !quote_state;
-//         println!("this segment:[{}]",i);
-//         // let mut chars = i.chars();
-//         // let mut c: Option<char> = chars.next();
-//         if !quote_state {
-//             let x = i.split('\n').map(|lines| lines.split('\''));
-//         } else {
-//             quote_buf = i;
-//         };
-
-//     }
-
-   
-
-   
-
-//         //find first 
-        
-
-// }

@@ -1,23 +1,21 @@
 use std::fmt;
-use std::ptr;
 
 const POOL_STRING_SIZE: usize = 1024;
 
-#[derive(Clone, Debug, PartialEq, PartialOrd, Hash, Eq, Ord, Default)]
-pub struct StringTicket {
-    start: usize,
-    len: usize,
-    i_chunk: usize,
-}
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Hash, Eq, Ord)]
 pub struct StringPool {
     v: Vec<StringTicket>,
     pool: Vec<String>,
 }
+#[derive(Clone, Debug, PartialEq, PartialOrd, Hash, Eq, Ord, Default)]
+struct StringTicket {
+    start: usize,
+    len: usize,
+    i_chunk: usize,
+}
 
 impl StringPool {
-
     pub fn new() -> StringPool {
         StringPool {
             v: Vec::new(),
@@ -36,18 +34,18 @@ impl StringPool {
 
     pub fn add_str(&mut self, s: &str) {
             let mut i_chunk = self.pool.len()-1 as usize;
-            let mut lc = &mut self.pool[i_chunk];
+            let mut last_chunk = &mut self.pool[i_chunk];
             
-            let mut chars_used = lc.len() as usize;
+            let mut chars_used = last_chunk.len() as usize;
             if chars_used >= POOL_STRING_SIZE {
                 self.pool.push(String::with_capacity(POOL_STRING_SIZE));
                 i_chunk += 1;
-                lc = &mut self.pool[i_chunk];
+                last_chunk = &mut self.pool[i_chunk];
                 chars_used = 0;
             };
 
             //push s to chunk
-            lc.push_str(s);
+            last_chunk.push_str(s);
             self.v.push(StringTicket{start:chars_used, len:s.len(), i_chunk}) 
     }
 
@@ -59,7 +57,6 @@ impl StringPool {
     pub fn reserve(&mut self, additional: usize)  {
         self.borrow_last_chunk().reserve(additional);
     }
-
 }
 
 impl Default for StringPool {
@@ -84,6 +81,7 @@ impl fmt::Display for StringPool {
 #[cfg(test)]
 mod tests {
    use super::*;
+   use std::ptr;
 
    #[test]
    fn try_add_str() {
