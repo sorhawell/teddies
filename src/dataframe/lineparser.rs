@@ -163,7 +163,7 @@ mod tests {
     #[test]
     fn iter_csv() {
         let mycsvstr = "1 ,\"\n\" , 3,four\n10, 20.20,30,fourty";
-        let mut csvstr_obj = CsvStr::new(mycsvstr, 0, 0);
+        let csvstr_obj = CsvStr::new(mycsvstr, 0, 0);
   
         let cells: Vec<CsvStr> = csvstr_obj.into_iter().collect();
 

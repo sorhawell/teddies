@@ -102,7 +102,7 @@ impl  DataFrame  {
         let errors: Vec<Box<dyn std::error::Error>> = errors.into_iter().flat_map(Result::err).collect();
         if !errors.is_empty() {
             Err(DFError{
-                error_msg: "tentative error complaining about some columns failed schema parsing".to_string(),
+                error_msg: "failed to parse schema".to_string(),
                 sub_errors: errors,
             })?;
         }
@@ -169,6 +169,7 @@ impl  DataFrame  {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn reserve(&mut self, addtional: usize) {
         for i in 0..self.data.len() {
             self.data[i].data.reserve(addtional);
@@ -297,49 +298,41 @@ pub fn csv_read_str_iter (csv_str: &str, schema_str: &str) -> Result<DataFrame> 
 mod tests {
    use super::*;
 
+    macro_rules! downcast_any_to {
+        ($x:expr, $y:ty) => {
+            $x.as_any()
+            .downcast_ref::<$y>()
+            .expect("not expected column type");
+        }
+    }
+
     #[test]
     fn test_csv_read_str() {
-    //read this csv by this schema 
-    let mycsvstr = "1 ,2.2 , 3,four\n10, 20.20,30,fourty";
-    let myschema = "a:int,b:doubleNullable,c:int,someothername:string";
-    let df = csv_read_str(mycsvstr, myschema).unwrap();
+        //read this csv by this schema 
+        let mycsvstr = "1 ,2.2 , 3,four\n10, 20.20,30,fourty";
+        let myschema = "a:int,b:doubleNullable,c:int,someothername:string";
+        let df = csv_read_str_iter(mycsvstr, myschema).unwrap();
 
-    //check ColInt
-    let a_ref_col = Box::new(column::ColInt{data: vec![1,10]});
-    let a_act_col: &column::ColInt = &df.data[0].data
-        .as_any()
-        .downcast_ref::<column::ColInt>()
-        .expect("not expected column type");
-    assert_eq!(
-        *a_act_col.data,
-        *a_ref_col.data
-    );
-
-    //check ColDoubleNullablet
-    let b_ref_col = Box::new(
-        column::ColDoubleNullable{data: vec![Some(2.2),Some(20.20)]}
-    );
-    let b_act_col: &column::ColDoubleNullable = &df.data[1].data
-        .as_any()
-        .downcast_ref::<column::ColDoubleNullable>()
-        .expect("not expected column type");
-    assert_eq!(
-        *b_act_col.data,
-        *b_ref_col.data
-    );
-
-    //check ColString
-    let d_ref_col = Box::new(
-        column::ColString{data: vec![String::from("four"), String::from("fourty")]}
-    );
-    let d_act_col: &column::ColString = &df.data[3].data
-        .as_any()
-        .downcast_ref::<column::ColString>()
-        .expect("not expected column type");
-    assert_eq!(
-        *d_act_col.data,
-        *d_ref_col.data
-    );
+        println!("iter df looks like ({})",df);
+    
+        //check ColInt
+        let a_ref_col = Box::new(column::ColInt{data: vec![1,10]});
+        let a_act_col: &column::ColInt = downcast_any_to!(&df.data[0].data,column::ColInt);
+        assert_eq!( *a_act_col.data, *a_ref_col.data);
+    
+        //check ColDoubleNullablet
+        let b_ref_col = Box::new(
+            column::ColDoubleNullable{data: vec![Some(2.2),Some(20.20)]}
+        );
+        let b_act_col: &column::ColDoubleNullable = downcast_any_to!(&df.data[1].data,column::ColDoubleNullable);
+        assert_eq!( *b_act_col.data, *b_ref_col.data);
+    
+        //check ColString
+        let d_ref_col = Box::new(
+            column::ColString{data: vec![String::from("four"), String::from("fourty")]}
+        );
+        let d_act_col: &column::ColString = downcast_any_to!(&df.data[3].data,column::ColString);
+        assert_eq!(*d_act_col.data, *d_ref_col.data);
     }
 
     #[test]
@@ -353,95 +346,53 @@ mod tests {
     
         //check ColInt
         let a_ref_col = Box::new(column::ColInt{data: vec![1,10]});
-        let a_act_col: &column::ColInt = &df.data[0].data
-            .as_any()
-            .downcast_ref::<column::ColInt>()
-            .expect("not expected column type");
-        assert_eq!(
-            *a_act_col.data,
-            *a_ref_col.data
-        );
+        let a_act_col: &column::ColInt = downcast_any_to!(&df.data[0].data,column::ColInt);
+        assert_eq!( *a_act_col.data, *a_ref_col.data);
     
         //check ColDoubleNullablet
         let b_ref_col = Box::new(
             column::ColDoubleNullable{data: vec![Some(2.2),Some(20.20)]}
         );
-        let b_act_col: &column::ColDoubleNullable = &df.data[1].data
-            .as_any()
-            .downcast_ref::<column::ColDoubleNullable>()
-            .expect("not expected column type");
-        assert_eq!(
-            *b_act_col.data,
-            *b_ref_col.data
-        );
+        let b_act_col: &column::ColDoubleNullable = downcast_any_to!(&df.data[1].data,column::ColDoubleNullable);
+        assert_eq!( *b_act_col.data, *b_ref_col.data);
     
         //check ColString
         let d_ref_col = Box::new(
             column::ColString{data: vec![String::from("four"), String::from("fourty")]}
         );
-        let d_act_col: &column::ColString = &df.data[3].data
-            .as_any()
-            .downcast_ref::<column::ColString>()
-            .expect("not expected column type");
-        assert_eq!(
-            *d_act_col.data,
-            *d_ref_col.data
-        );
+        let d_act_col: &column::ColString = downcast_any_to!(&df.data[3].data,column::ColString);
+        assert_eq!(*d_act_col.data, *d_ref_col.data);
 
     }
 
     #[test]
     fn test_csv_read_iter_complete_the_lines() {
+
         //read this csv by this schema 
-        let mycsvstr = "1,1.1,3,four\n123\n100,200.200,300,fourhundred\n456\n789\n\n";
-        let myschema = "a:intNullable,b:doubleNullable,c:intNullable,someothername:string";
+        let mycsvstr = "1 ,2.2 , 3,four\n10, 20.20,30,fourty";
+        let myschema = "a:int,b:doubleNullable,c:int,someothername:string";
         let df = csv_read_str_iter(mycsvstr, myschema).unwrap();
 
         println!("iter df looks like ({})",df);
     
         //check ColInt
-        let a_ref_col = Box::new(column::ColIntNullable{
-            data: vec![Some(1),Some(123),Some(100),Some(456),Some(789),None]
-        });
-        let a_act_col: &column::ColIntNullable = &df.data[0].data
-            .as_any()
-            .downcast_ref::<column::ColIntNullable>()
-            .expect("not expected column type");
-        assert_eq!(
-            *a_act_col.data,
-            *a_ref_col.data
-        );
+        let a_ref_col = Box::new(column::ColInt{data: vec![1,10]});
+        let a_act_col: &column::ColInt = downcast_any_to!(&df.data[0].data,column::ColInt);
+        assert_eq!( *a_act_col.data, *a_ref_col.data);
     
         //check ColDoubleNullablet
         let b_ref_col = Box::new(
-            column::ColDoubleNullable{data: vec![Some(1.1),None,Some(200.200),None,None,None]}
+            column::ColDoubleNullable{data: vec![Some(2.2),Some(20.20)]}
         );
-        let b_act_col: &column::ColDoubleNullable = &df.data[1].data
-            .as_any()
-            .downcast_ref::<column::ColDoubleNullable>()
-            .expect("not expected column type");
-        assert_eq!(
-            *b_act_col.data,
-            *b_ref_col.data
-        );
-        
-        
-
+        let b_act_col: &column::ColDoubleNullable = downcast_any_to!(&df.data[1].data,column::ColDoubleNullable);
+        assert_eq!( *b_act_col.data, *b_ref_col.data);
+    
         //check ColString
-        macro_rules! vec_of_strings {($($x:expr),*) => (vec![$($x.to_string()),*]);}
         let d_ref_col = Box::new(
-            column::ColString{data: vec_of_strings!["four","","fourhundred","","",""]}
+            column::ColString{data: vec![String::from("four"), String::from("fourty")]}
         );
-
-        
-        let d_act_col: &column::ColString = &df.data[3].data
-            .as_any()
-            .downcast_ref::<column::ColString>()
-            .expect("not expected column type");
-        assert_eq!(
-            *d_act_col.data,
-            *d_ref_col.data
-        );
+        let d_act_col: &column::ColString = downcast_any_to!(&df.data[3].data,column::ColString);
+        assert_eq!(*d_act_col.data, *d_ref_col.data);
 
     }
 
@@ -467,16 +418,16 @@ mod tests {
     fn return_error_schema_errors() {
         //col c is int and must fail
        
-        let myschema = "a:not_a_col_type,b:third_token:int,,correct_col:string";
+        let myschema = "a:not_a_col_type,3rd_token:b:int,,correct_col:string";
         let df = DataFrame::new(myschema);
         
         //see errors
         //df.unwrap();
 
-        let expected_error_msg = "dataframe error tentative error complaining about some columns failed schema parsing
-sub error 0: failed to parse \"not_a_col_type\" to any known datatype
-sub error 1: failed to parse the token stream \"unexpected third token \"b\" for column descr No. 1\" as a column
-sub error 2: failed to parse \"\" to any known datatype".to_string();
+        let expected_error_msg = "dataframe error failed to parse schema
+sub error 0: ColError: 'ParseDataType', do not recognize  \"not_a_col_type\" as datatype
+sub error 1: ColError: 'SchemaSyntax' \"unexpected third token \"3rd_token\" for column descr No. 1\"
+sub error 2: ColError: 'ParseDataType', do not recognize  \"\" as datatype".to_string();
 
         if let Err(err) = df {
             let err_text = err.to_string();

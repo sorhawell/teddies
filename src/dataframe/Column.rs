@@ -24,10 +24,10 @@ impl fmt::Display for ColError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.errorcode {
             ColErrorcode::ParseDataType => {
-                write!(f, "failed to parse \"{}\" to any known datatype", self.error_msg)?;
+                write!(f, "ColError: 'ParseDataType', do not recognize  \"{}\" as datatype", self.error_msg)?;
             },
             ColErrorcode::SchemaSyntax => {
-                write!(f, "failed to parse the token stream \"{}\" as a column", self.error_msg)?;
+                write!(f, "ColError: 'SchemaSyntax' \"{}\"", self.error_msg)?;
             }
         }
         Ok(())
@@ -109,20 +109,6 @@ impl fmt::Display for Dtype{
 }
 
 impl Dtype {
-    pub fn from_str(s: &str) -> Dtype {
-        let lc_s = s.to_lowercase();
-        match &lc_s[..] {
-            "int" => Dtype::ColInt,
-            "intnullable" => Dtype::ColIntNullable,
-            "double" => Dtype::ColDouble,
-            "doublenullable" => Dtype::ColDoubleNullable,
-            "string" => Dtype::ColString,
-            "stringpool" => Dtype::ColStringPool,
-            _ => {
-                panic!("could not parse dtype {}",s);
-            },
-        }
-    }
 
     pub fn from_str_to_res(s: &str) -> Result<Dtype> {
         let lc_s = s.to_lowercase();
