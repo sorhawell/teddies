@@ -37,6 +37,8 @@ impl error::Error for ColError {}
 
 
 //Column has optional name, a data-type flag and dynamic trait type VectorData
+use serde::{Serialize, Deserialize};
+#[derive(serde::Serialize, Deserialize)]
 pub struct Column  {
     pub name: Option<String>,
     dtype: Dtype,
@@ -70,6 +72,10 @@ impl Clone for Column {
 }
 
 //VectorData is the trait that data of any column has, be it ints or floats or something else.
+
+
+
+#[typetag::serde(tag = "type")]
 pub trait VectorData {
     fn push_from_str(&mut self, x: &str) -> Result<()>;
     fn to_string(&self) -> String;
@@ -86,7 +92,7 @@ impl fmt::Display for dyn VectorData {
 
 
 //Dtype is the column flag of data type.
-#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub enum Dtype {
     ColInt,
     ColDouble,
@@ -136,35 +142,36 @@ impl Dtype {
 //all structs that implement VectorData
 
 //vanilla i32 f32 vectors
-#[derive(Clone, Debug, PartialEq, PartialOrd, Default)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
 pub struct ColInt {pub data: Vec<i32>}
 
-#[derive(Clone, Debug, PartialEq, PartialOrd, Default)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
 pub struct ColIntCow<'a>{
     pub data: Cow<'a,Vec<i32>>
 }
 
-#[derive(Clone, Debug, PartialEq, PartialOrd, Default)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
 pub struct ColDouble {pub data: Vec<f32>}
 
 //nullable, vectors of optional i32 and f32
-#[derive(Clone, Debug, PartialEq, PartialOrd, Default)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
 pub struct ColIntNullable {pub data: Vec<Option<i32>>}
 
-#[derive(Clone, Debug, PartialEq, PartialOrd, Default)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
 pub struct ColDoubleNullable {pub data: Vec<Option<f32>>}
 
 //string vector
 
-#[derive(Clone, Debug, PartialEq, PartialOrd, Default)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
 pub struct ColString {pub data: Vec<String>}
 
 
-#[derive(Clone, Debug, PartialEq, PartialOrd, Default)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
 pub struct ColStringPool {pub data: stringpool::StringPool}
 
 
 //implement vanilla i32 and f32 vectors
+#[typetag::serde]
 impl VectorData for ColInt {
     fn push_from_str(&mut self, x: &str) -> Result<()> {
         let value = x.trim().parse::<i32>()?;
@@ -192,6 +199,7 @@ impl VectorData for ColInt {
     }
 }
 
+#[typetag::serde]
 impl VectorData  for ColDouble {
     fn push_from_str(&mut self, x: &str) -> Result<()> {
         let value = x.trim().parse::<f32>()?;
@@ -218,6 +226,7 @@ impl VectorData  for ColDouble {
 }
 
 //implement nullable 
+#[typetag::serde]
 impl  VectorData  for ColIntNullable {
     fn push_from_str(&mut self, x: &str) -> Result<()> {
         self.data.push(x.trim().parse::<i32>().ok());
@@ -248,6 +257,7 @@ impl  VectorData  for ColIntNullable {
     }
 }
 
+#[typetag::serde]
 impl  VectorData for ColDoubleNullable {
     fn push_from_str(&mut self, x: &str) -> Result<()> {
         self.data.push(x.trim().parse::<f32>().ok()); //f32 only diff from above
@@ -278,6 +288,7 @@ impl  VectorData for ColDoubleNullable {
     }
 }
 
+#[typetag::serde]
 impl VectorData for ColString {
     fn push_from_str(&mut self, x: &str) -> Result<()> {
         self.data.push(String::from(x));
@@ -302,6 +313,7 @@ impl VectorData for ColString {
     }
 }
 
+#[typetag::serde]
 impl VectorData for ColStringPool {
     fn push_from_str(&mut self, x: &str) -> Result<()> {
         self.data.add_str(x);

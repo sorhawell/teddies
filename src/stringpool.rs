@@ -1,14 +1,15 @@
 use std::fmt;
+use serde::{Serialize, Deserialize};
 
 const POOL_STRING_SIZE: usize = 1024;
 
 
-#[derive(Clone, Debug, PartialEq, PartialOrd, Hash, Eq, Ord)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Hash, Eq, Ord, Serialize, Deserialize)]
 pub struct StringPool {
     v: Vec<StringTicket>,
     pool: Vec<String>,
 }
-#[derive(Clone, Debug, PartialEq, PartialOrd, Hash, Eq, Ord, Default)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Hash, Eq, Ord, Default, Serialize, Deserialize)]
 struct StringTicket {
     start: usize,
     len: usize,

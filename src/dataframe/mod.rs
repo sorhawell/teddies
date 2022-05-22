@@ -14,6 +14,8 @@ extern crate filebuffer;
 use std::error;
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
+use serde::{Serialize, Deserialize};
+
 
 #[derive(Debug)]
 pub struct DFError {
@@ -31,6 +33,9 @@ impl fmt::Display for DFError {
 }
 impl error::Error for DFError {}
 
+
+
+#[derive(serde::Serialize, Deserialize)]
 pub struct DataFrame  {
     pub data: Vec<column::Column >,
 }
@@ -175,6 +180,8 @@ impl  DataFrame  {
             self.data[i].data.reserve(addtional);
         }
     }
+
+    pub fn 
 }
 
 
@@ -302,7 +309,7 @@ mod tests {
         ($x:expr, $y:ty) => {
             $x.as_any()
             .downcast_ref::<$y>()
-            .expect("not expected column type");
+            .expect("not expected column type")
         }
     }
 

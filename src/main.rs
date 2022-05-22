@@ -1,6 +1,8 @@
 mod dataframe;
 pub mod stringpool;
-
+use serde::{Serialize, Deserialize};
+use serde_json;
+use bincode;
 
 
 fn main() {
@@ -25,4 +27,15 @@ fn main() {
       df2.append_line(&a_csv_line);
    }
    println!("Hi I'm also \n{}", df2);
+
+   let serialized = serde_json::to_string(&df2).unwrap();
+   println!("this is df2_json{}",serialized);
+   let df3: dataframe::DataFrame = serde_json::from_str(&serialized[..]).unwrap();
+   println!("this is df3 {}",df3);
+
+   let encoded = bincode::serialize(&df).unwrap();
+
+   println!("{:?}",encoded)
+
+
 }
