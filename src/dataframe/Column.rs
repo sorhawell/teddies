@@ -1,7 +1,7 @@
-use std::fmt;
+use crate::stringpool;
 use std::any::Any;
 use std::borrow::Cow;
-use crate::stringpool;
+use std::fmt;
 
 //use super::Result;
 use std::error;
@@ -24,8 +24,12 @@ impl fmt::Display for ColError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.errorcode {
             ColErrorcode::ParseDataType => {
-                write!(f, "ColError: 'ParseDataType', do not recognize  \"{}\" as datatype", self.error_msg)?;
-            },
+                write!(
+                    f,
+                    "ColError: 'ParseDataType', do not recognize  \"{}\" as datatype",
+                    self.error_msg
+                )?;
+            }
             ColErrorcode::SchemaSyntax => {
                 write!(f, "ColError: 'SchemaSyntax' \"{}\"", self.error_msg)?;
             }
@@ -35,20 +39,16 @@ impl fmt::Display for ColError {
 }
 impl error::Error for ColError {}
 
-
 //Column has optional name, a data-type flag and dynamic trait type VectorData
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 #[derive(serde::Serialize, Deserialize)]
-pub struct Column  {
+pub struct Column {
     pub name: Option<String>,
     dtype: Dtype,
-    pub data: Box<dyn VectorData >,
+    pub data: Box<dyn VectorData>,
 }
-impl  Column  {
-    pub fn new(
-        name: Option<String>,
-        dtype: Dtype
-    ) -> Column {
+impl Column {
+    pub fn new(name: Option<String>, dtype: Dtype) -> Column {
         let data: Box<dyn VectorData> = match dtype {
             Dtype::ColInt => Box::new(ColInt::default()),
             Dtype::ColDouble => Box::new(ColDouble::default()),
@@ -57,39 +57,36 @@ impl  Column  {
             Dtype::ColString => Box::new(ColString::default()),
             Dtype::ColStringPool => Box::new(ColStringPool::default()),
         };
-        Column{name,dtype,data}
+        Column { name, dtype, data }
     }
 }
 impl Clone for Column {
     fn clone(&self) -> Self {
-        Column{
+        Column {
             name: self.name.clone(),
             dtype: self.dtype,
             data: self.data.boxed_clone(),
         }
-
     }
 }
 
 //VectorData is the trait that data of any column has, be it ints or floats or something else.
 
-
-
 #[typetag::serde(tag = "type")]
 pub trait VectorData {
     fn push_from_str(&mut self, x: &str) -> Result<()>;
     fn to_string(&self) -> String;
-    fn as_any(& self) -> &dyn Any;
+    fn as_any(&self) -> &dyn Any;
     fn reserve(&mut self, additional: usize);
     fn dtype(&self) -> Dtype;
     fn boxed_clone(&self) -> Box<dyn VectorData>;
+    fn len(&self) -> usize;
 }
 impl fmt::Display for dyn VectorData {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
-
 
 //Dtype is the column flag of data type.
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
@@ -101,21 +98,20 @@ pub enum Dtype {
     ColString,
     ColStringPool, //stringpool crate
 }
-impl fmt::Display for Dtype{
+impl fmt::Display for Dtype {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Dtype::ColInt =>  write!(f, "DType: ColInt"),
-            Dtype::ColDouble =>  write!(f, "DType: ColDouble"),
-            Dtype::ColIntNullable =>  write!(f, "DType: ColIntNullable"),
-            Dtype::ColDoubleNullable =>  write!(f, "DType: ColDoubleNullable"),
-            Dtype::ColString =>  write!(f, "DType: ColString"),
-            Dtype::ColStringPool =>  write!(f, "DType: ColStringPool"),
+            Dtype::ColInt => write!(f, "DType: ColInt"),
+            Dtype::ColDouble => write!(f, "DType: ColDouble"),
+            Dtype::ColIntNullable => write!(f, "DType: ColIntNullable"),
+            Dtype::ColDoubleNullable => write!(f, "DType: ColDoubleNullable"),
+            Dtype::ColString => write!(f, "DType: ColString"),
+            Dtype::ColStringPool => write!(f, "DType: ColStringPool"),
         }
     }
 }
 
 impl Dtype {
-
     pub fn from_str_to_res(s: &str) -> Result<Dtype> {
         let lc_s = s.to_lowercase();
         let new_dtype = match &lc_s[..] {
@@ -126,49 +122,57 @@ impl Dtype {
             "string" => Dtype::ColString,
             "stringpool" => Dtype::ColStringPool,
             _ => {
-                let err = ColError{
+                let err = ColError {
                     errorcode: ColErrorcode::ParseDataType,
                     error_msg: s.to_string(),
-                
                 };
-                return Err(Box::new(err))
+                return Err(Box::new(err));
             }
         };
         Ok(new_dtype)
     }
 }
 
-
 //all structs that implement VectorData
 
 //vanilla i32 f32 vectors
 #[derive(Clone, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
-pub struct ColInt {pub data: Vec<i32>}
-
-#[derive(Clone, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
-pub struct ColIntCow<'a>{
-    pub data: Cow<'a,Vec<i32>>
+pub struct ColInt {
+    pub data: Vec<i32>,
 }
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
-pub struct ColDouble {pub data: Vec<f32>}
+pub struct ColIntCow<'a> {
+    pub data: Cow<'a, Vec<i32>>,
+}
+
+#[derive(Clone, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
+pub struct ColDouble {
+    pub data: Vec<f32>,
+}
 
 //nullable, vectors of optional i32 and f32
 #[derive(Clone, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
-pub struct ColIntNullable {pub data: Vec<Option<i32>>}
+pub struct ColIntNullable {
+    pub data: Vec<Option<i32>>,
+}
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
-pub struct ColDoubleNullable {pub data: Vec<Option<f32>>}
+pub struct ColDoubleNullable {
+    pub data: Vec<Option<f32>>,
+}
 
 //string vector
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
-pub struct ColString {pub data: Vec<String>}
-
+pub struct ColString {
+    pub data: Vec<String>,
+}
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
-pub struct ColStringPool {pub data: stringpool::StringPool}
-
+pub struct ColStringPool {
+    pub data: stringpool::StringPool,
+}
 
 //implement vanilla i32 and f32 vectors
 #[typetag::serde]
@@ -179,14 +183,15 @@ impl VectorData for ColInt {
         Ok(())
     }
     fn to_string(&self) -> String {
-        self.data.iter()
-        .map(|x| x.to_string())
-        .fold(String::new(), |a,b| a+&b[..]+", ".into())
+        self.data
+            .iter()
+            .map(|x| x.to_string())
+            .fold(String::new(), |a, b| a + &b[..] + ", ".into())
     }
     fn as_any(&self) -> &dyn Any {
         self
     }
-    fn reserve(&mut self, additional: usize)  {
+    fn reserve(&mut self, additional: usize) {
         self.data.reserve(additional);
     }
 
@@ -197,24 +202,29 @@ impl VectorData for ColInt {
     fn dtype(&self) -> Dtype {
         Dtype::ColInt
     }
+
+    fn len(&self) -> usize {
+        self.data.len()
+    }
 }
 
 #[typetag::serde]
-impl VectorData  for ColDouble {
+impl VectorData for ColDouble {
     fn push_from_str(&mut self, x: &str) -> Result<()> {
         let value = x.trim().parse::<f32>()?;
         self.data.push(value);
         Ok(())
     }
     fn to_string(&self) -> String {
-        self.data.iter()
-        .map(|x| x.to_string())
-        .fold(String::new(), |a,b| a+&b[..]+", ".into())
+        self.data
+            .iter()
+            .map(|x| x.to_string())
+            .fold(String::new(), |a, b| a + &b[..] + ", ".into())
     }
     fn as_any(&self) -> &dyn Any {
         self
     }
-    fn reserve(&mut self, additional: usize)  {
+    fn reserve(&mut self, additional: usize) {
         self.data.reserve(additional);
     }
     fn boxed_clone(&self) -> Box<dyn VectorData> {
@@ -223,30 +233,35 @@ impl VectorData  for ColDouble {
     fn dtype(&self) -> Dtype {
         Dtype::ColDouble
     }
+
+    fn len(&self) -> usize {
+        self.data.len()
+    }
 }
 
-//implement nullable 
+//implement nullable
 #[typetag::serde]
-impl  VectorData  for ColIntNullable {
+impl VectorData for ColIntNullable {
     fn push_from_str(&mut self, x: &str) -> Result<()> {
         self.data.push(x.trim().parse::<i32>().ok());
         Ok(())
     }
     fn to_string(&self) -> String {
-        self.data.iter()
-        .map(|x| {
-            if let Some(y) = x {
-                y.to_string()
-            } else {
-                String::from("NA")
-            }
-        })
-        .fold(String::new(), |a,b| a+&b[..]+", ".into())
+        self.data
+            .iter()
+            .map(|x| {
+                if let Some(y) = x {
+                    y.to_string()
+                } else {
+                    String::from("NA")
+                }
+            })
+            .fold(String::new(), |a, b| a + &b[..] + ", ".into())
     }
     fn as_any(&self) -> &dyn Any {
         self
     }
-    fn reserve(&mut self, additional: usize)  {
+    fn reserve(&mut self, additional: usize) {
         self.data.reserve(additional);
     }
     fn boxed_clone(&self) -> Box<dyn VectorData> {
@@ -255,29 +270,33 @@ impl  VectorData  for ColIntNullable {
     fn dtype(&self) -> Dtype {
         Dtype::ColIntNullable
     }
+    fn len(&self) -> usize {
+        self.data.len()
+    }
 }
 
 #[typetag::serde]
-impl  VectorData for ColDoubleNullable {
+impl VectorData for ColDoubleNullable {
     fn push_from_str(&mut self, x: &str) -> Result<()> {
         self.data.push(x.trim().parse::<f32>().ok()); //f32 only diff from above
         Ok(())
     }
     fn to_string(&self) -> String {
-        self.data[..].iter()
-        .map(|x| {
-            if let Some(y) = x {
-                y.to_string()
-            } else {
-                String::from("NA")
-            }
-        })
-        .fold(String::new(), |a,b| a+&b[..]+", ".into())
+        self.data[..]
+            .iter()
+            .map(|x| {
+                if let Some(y) = x {
+                    y.to_string()
+                } else {
+                    String::from("NA")
+                }
+            })
+            .fold(String::new(), |a, b| a + &b[..] + ", ".into())
     }
     fn as_any(&self) -> &dyn Any {
         self
     }
-    fn reserve(&mut self, additional: usize)  {
+    fn reserve(&mut self, additional: usize) {
         self.data.reserve(additional);
     }
     fn boxed_clone(&self) -> Box<dyn VectorData> {
@@ -285,6 +304,10 @@ impl  VectorData for ColDoubleNullable {
     }
     fn dtype(&self) -> Dtype {
         Dtype::ColDouble
+    }
+
+    fn len(&self) -> usize {
+        self.data.len()
     }
 }
 
@@ -295,13 +318,14 @@ impl VectorData for ColString {
         Ok(())
     }
     fn to_string(&self) -> String {
-        self.data.iter()
-        .fold(String::new(), |a,b| a+&b[..]+", ".into())
+        self.data
+            .iter()
+            .fold(String::new(), |a, b| a + &b[..] + ", ".into())
     }
     fn as_any(&self) -> &dyn Any {
         self
     }
-    fn reserve(&mut self, additional: usize)  {
+    fn reserve(&mut self, additional: usize) {
         self.data.reserve(additional);
     }
     fn boxed_clone(&self) -> Box<dyn VectorData> {
@@ -310,6 +334,10 @@ impl VectorData for ColString {
 
     fn dtype(&self) -> Dtype {
         Dtype::ColString
+    }
+
+    fn len(&self) -> usize {
+        self.data.len()
     }
 }
 
@@ -325,7 +353,7 @@ impl VectorData for ColStringPool {
     fn as_any(&self) -> &dyn Any {
         self
     }
-    fn reserve(&mut self, additional: usize)  {
+    fn reserve(&mut self, additional: usize) {
         self.data.reserve(additional);
     }
     fn boxed_clone(&self) -> Box<dyn VectorData> {
@@ -333,5 +361,9 @@ impl VectorData for ColStringPool {
     }
     fn dtype(&self) -> Dtype {
         Dtype::ColStringPool
+    }
+
+    fn len(&self) -> usize {
+        self.data.len()
     }
 }

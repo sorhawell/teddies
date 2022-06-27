@@ -1,17 +1,24 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use teddies::dataframe;
 
-
 fn csv_file_iter() {
     let mystring = String::from("myother.csv");
     let myschema = "a:int,b:int,c:string,d:double";
-    let _ = dataframe::csv_read_file_iter(&mystring, myschema);
+    let x = dataframe::csv_read_file_iter2(&mystring, myschema);
+    let shape = x.unwrap().shape();
+    if shape.0 == 0 {
+        panic!("empty table")
+    }
 }
 
 fn csv_file_iter_stringpool() {
     let mystring = String::from("myother.csv");
     let myschema = "a:int,b:int,c:stringpool,d:double";
-    let _ = dataframe::csv_read_file_iter(&mystring, myschema);
+    let x = dataframe::csv_read_file_iter2(&mystring, myschema);
+    let shape = x.unwrap().shape();
+    if shape.0 == 0 {
+        panic!("empty table")
+    }
 }
 
 fn polars() {
