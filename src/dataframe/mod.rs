@@ -134,30 +134,33 @@ impl DataFrame {
         Ok(())
     }
 
+    fn fill_remaining_row(&mut self, last_col: usize, crit: usize) -> Result<()> {
+        if last_col < crit {
+            ((last_col + 1)..self.data.len()).try_for_each(|j| self.data[j].data.push_from_str(""))
+        } else {
+            Ok(())
+        }
+    }
+
     pub fn append_str(&mut self, text: &str) -> Result<()> {
         let csvstr = lineparser::CsvStr::new(text, 0, 0);
         let mut last_row: usize = 0;
         let mut last_col: usize = 0;
         let crit = self.data.len() - 1;
+
         for i in csvstr {
+            //fill in a cell
             self.data[i.col].data.push_from_str(i.text)?;
 
+            //check if new row
             if i.row != last_row {
-                //add to remaining columns if missing cells in line
-                if last_col < crit {
-                    for j in (last_col + 1)..self.data.len() {
-                        self.data[j].data.push_from_str("")?;
-                    }
-                }
+                //add to remaining columns to last row if missing cells in line
+                self.fill_remaining_row(last_col, crit)?;
             }
             last_col = i.col;
             last_row = i.row;
         }
-        if last_col < crit {
-            for j in (last_col + 1)..self.data.len() {
-                self.data[j].data.push_from_str("")?;
-            }
-        }
+        self.fill_remaining_row(last_col, crit)?;
         Ok(())
     }
 
